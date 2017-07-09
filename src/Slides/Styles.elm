@@ -1,4 +1,4 @@
-module Styles exposing (..)
+module Slides.Styles exposing (..)
 
 import Style exposing (..)
 import Style.Color as Color
@@ -11,7 +11,7 @@ type Styles
     = None
     | DeckTitle
     | Title
-    | Content
+    | Pane
     | Salutation
 
 
@@ -53,7 +53,7 @@ stylesheet =
             , Font.lineHeight 1.3
               -- line height, given as a ratio of current font size.
             ]
-        , style Content
+        , style Pane
             [ Border.all 5
             , Border.solid
             , Font.typeface [ "helvetica", "arial", "sans-serif" ]

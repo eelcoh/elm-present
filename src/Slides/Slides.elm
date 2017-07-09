@@ -1,36 +1,42 @@
-module Layouts.Pages exposing (..)
+module Slides.Slides exposing (..)
 
 import Element exposing (..)
 import Element.Attributes exposing (..)
 import Html exposing (div)
-import Layouts.Model exposing (Page(..), PageContent, PageContent(..), Title, WeighedPageContent, Weight)
 import List exposing (sum, take)
 import Markdown
-import Styles exposing (Styles(..))
+import Slides.Model exposing (Pane, Pane(..), Slide(..), Title, WeighedPane, Weight)
+import Slides.Styles exposing (Styles(..), stylesheet)
 import Tuple exposing (first, second)
 
 
-renderPage : Page -> Element Styles variation msg
-renderPage page =
+renderSlide : Slide -> Element Styles variation msg
+renderSlide page =
     case page of
-        TitlePage title ->
+        TitleSlide title ->
             deckTitle title
 
-        FullPage pageContent ->
-            renderPageContent pageContent
+        FullSlide pane ->
+            renderPane pane
 
-        PageWithoutTitle weighedContents ->
+        SlideWithoutTitle weighedPane ->
             empty
 
-        PageWithTitle title weighedContents ->
-            renderPageWithTitle title weighedContents
+        SlideWithTitle title weighedPane ->
+            renderSlideWithTitle title weighedPane
 
         ThankYou salut ->
             salutation salut
 
 
-renderPageWithTitle : Title -> List WeighedPageContent -> Element Styles variation msg
-renderPageWithTitle title weighedContents =
+render : Slide -> Html.Html msg
+render page =
+    renderSlide page
+        |> layout stylesheet
+
+
+renderSlideWithTitle : Title -> List WeighedPane -> Element Styles variation msg
+renderSlideWithTitle title weighedPane =
     let
         titleArea =
             area
@@ -41,7 +47,7 @@ renderPageWithTitle title weighedContents =
                 (renderTitle title)
 
         contentAreas =
-            normaliseWeight weighedContents
+            normaliseWeight weighedPane
                 |> toAreaPositions
                 |> List.map contentArea
 
@@ -51,7 +57,7 @@ renderPageWithTitle title weighedContents =
                 , width = w
                 , height = 3
                 }
-                (renderPageContent pc)
+                (renderPane pc)
 
         areas =
             titleArea :: contentAreas
@@ -91,9 +97,9 @@ salutation t =
         [ el Salutation [] (text t) ]
 
 
-renderPageContent : PageContent -> Element Styles variation msg
-renderPageContent pageContent =
-    case pageContent of
+renderPane : Pane -> Element Styles variation msg
+renderPane pane =
+    case pane of
         FromMarkDown markdownString ->
             let
                 htmlContent =
@@ -142,14 +148,14 @@ normaliseWeight weights =
 
 
 toAreaPositions : List ( Int, a ) -> List ( ( Int, Int ), a )
-toAreaPositions weighedContents =
+toAreaPositions weighedPane =
     let
         f w1 ( s, w0 ) =
             ( (s + w0 + w1), w1 )
     in
-        List.map first weighedContents
+        List.map first weighedPane
             |> List.scanl f ( 0, 0 )
-            |> List.map2 (flip (,)) (List.map second weighedContents)
+            |> List.map2 (flip (,)) (List.map second weighedPane)
 
 
 

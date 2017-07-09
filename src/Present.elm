@@ -1,7 +1,7 @@
 module Present
     exposing
-        ( titlePage
-        , fullPage
+        ( titleSlide
+        , fullSlide
         , pageWithTitleFull
         , pageWithTitle_50_50
         , fromMarkDown
@@ -13,8 +13,8 @@ module Present
 # Definition
 @docs app
 
-# Page making functions
-@docs titlePage, fullPage, pageWithTitleFull, pageWithTitle_50_50, fromMarkDown
+# Slide making functions
+@docs titleSlide, fullSlide, pageWithTitleFull, pageWithTitle_50_50, fromMarkDown
 
 -}
 
@@ -30,15 +30,15 @@ import Html exposing (Html)
 -}
 
 import Element exposing (Element, viewport)
-import Styles exposing (Styles(..))
 
 
 {-
    Implementation based on mdgriffith/style-elements
 -}
 
-import Layouts.Model exposing (..)
-import Layouts.Pages exposing (renderPage)
+import Slides.Model exposing (..)
+import Slides.Slides exposing (renderSlide)
+import Slides.Styles exposing (Styles(..))
 
 
 -- Models
@@ -46,7 +46,7 @@ import Layouts.Pages exposing (renderPage)
 
 type alias Presentation variation msg =
     { past : List (Element Styles variation msg)
-    , current : CurrentPage variation msg
+    , current : CurrentSlide variation msg
     , toGo : List (Element Styles variation msg)
     }
 
@@ -58,7 +58,7 @@ type alias Model variation msg =
 
 
 type alias Deck =
-    List Page
+    List Slide
 
 
 type Msg
@@ -71,7 +71,7 @@ type Msg
     | NoOp
 
 
-type CurrentPage variation msg
+type CurrentSlide variation msg
     = EmptyDeck
     | StartOfDeck
     | EndOfDeck
@@ -124,7 +124,7 @@ view { presentation } =
             Html.div [] []
 
         Current c ->
-            viewport Styles.stylesheet c
+            viewport Slides.Styles.stylesheet c
 
 
 
@@ -133,56 +133,56 @@ view { presentation } =
 
 {-| Create a title page.
 
-    titlePage "This is a title" == page
+    titleSlide "This is a title" == page
 -}
-titlePage : Title -> Page
-titlePage title =
-    TitlePage title
+titleSlide : Title -> Slide
+titleSlide title =
+    TitleSlide title
 
 
 {-| Create a page with text.
 
-    fullPage (markdown "## This is a h2" ) == page
+    fullSlide (markdown "## This is a h2" ) == page
 -}
-fullPage : PageContent -> Page
-fullPage pageContent =
-    FullPage pageContent
+fullSlide : Pane -> Slide
+fullSlide pageContent =
+    FullSlide pageContent
 
 
 {-| Create a page with a title and a single box with text content.
 
-    fullPage "This is the page title" (fromMarkDown "## This is a h2" ) == page
+    fullSlide "This is the page title" (fromMarkDown "## This is a h2" ) == page
 -}
-pageWithTitleFull : String -> PageContent -> Page
+pageWithTitleFull : String -> Pane -> Slide
 pageWithTitleFull string pageContent =
-    PageWithTitle string [ ( 1, pageContent ) ]
+    SlideWithTitle string [ ( 1, pageContent ) ]
 
 
 {-| Create a page with a title and a two equally sized boxes with text content.
 
-    fullPage
+    fullSlide
       "This is the page title"
       (fromMarkDown "### This is the left content" )
       (fromMarkdown "### This is a right content" )
 -}
-pageWithTitle_50_50 : String -> PageContent -> PageContent -> Page
+pageWithTitle_50_50 : String -> Pane -> Pane -> Slide
 pageWithTitle_50_50 title left right =
-    PageWithTitle title [ ( 5, left ), ( 5, right ) ]
+    SlideWithTitle title [ ( 5, left ), ( 5, right ) ]
 
 
-pageWithTitle_30_70 : String -> PageContent -> PageContent -> Page
+pageWithTitle_30_70 : String -> Pane -> Pane -> Slide
 pageWithTitle_30_70 title left right =
-    PageWithTitle title [ ( 3, left ), ( 7, right ) ]
+    SlideWithTitle title [ ( 3, left ), ( 7, right ) ]
 
 
-pageWithoutTitle_50_50 : PageContent -> PageContent -> Page
+pageWithoutTitle_50_50 : Pane -> Pane -> Slide
 pageWithoutTitle_50_50 left right =
-    PageWithoutTitle [ ( 5, left ), ( 5, right ) ]
+    SlideWithoutTitle [ ( 5, left ), ( 5, right ) ]
 
 
-pageWithoutTitle_30_70 : PageContent -> PageContent -> Page
+pageWithoutTitle_30_70 : Pane -> Pane -> Slide
 pageWithoutTitle_30_70 left right =
-    PageWithoutTitle [ ( 3, left ), ( 7, right ) ]
+    SlideWithoutTitle [ ( 3, left ), ( 7, right ) ]
 
 
 {-| Create content from markdown.
@@ -190,7 +190,7 @@ pageWithoutTitle_30_70 left right =
     fromMarkDown "### This is the left content"
 
 -}
-fromMarkDown : String -> PageContent
+fromMarkDown : String -> Pane
 fromMarkDown string =
     FromMarkDown string
 
@@ -404,7 +404,7 @@ init deck location =
             , presentation =
                 { past = []
                 , current = StartOfDeck
-                , toGo = List.map renderPage deck
+                , toGo = List.map renderSlide deck
                 }
             }
     in
@@ -414,8 +414,8 @@ init deck location =
 {-| Create a slidedeck
 
    slidedeck =
-     [ titlePage "Welcome"
-     , fullPage
+     [ titleSlide "Welcome"
+     , fullSlide
          """ # This is a header
          And this should be plain text
          """
