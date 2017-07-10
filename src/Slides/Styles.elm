@@ -1,9 +1,9 @@
 module Slides.Styles exposing (..)
 
-import Style exposing (..)
-import Style.Color as Color
 import Color exposing (..)
+import Style exposing (..)
 import Style.Border as Border
+import Style.Color as Color
 import Style.Font as Font
 
 

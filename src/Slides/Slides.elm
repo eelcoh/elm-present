@@ -1,4 +1,4 @@
-module Slides.Slides exposing (..)
+module Slides.Slides exposing (render)
 
 import Element exposing (..)
 import Element.Attributes exposing (..)
@@ -11,8 +11,8 @@ import Tuple exposing (first, second)
 
 
 renderSlide : Slide -> Element Styles variation msg
-renderSlide page =
-    case page of
+renderSlide slide =
+    case slide of
         TitleSlide title ->
             deckTitle title
 
@@ -30,8 +30,8 @@ renderSlide page =
 
 
 render : Slide -> Html.Html msg
-render page =
-    renderSlide page
+render slide =
+    renderSlide slide
         |> layout stylesheet
 
 
@@ -46,31 +46,25 @@ renderSlideWithTitle title weighedPane =
                 }
                 (renderTitle title)
 
-        contentAreas =
+        panes =
             normaliseWeight weighedPane
                 |> toAreaPositions
-                |> List.map contentArea
+                |> List.map pane
 
-        contentArea ( ( c, w ), pc ) =
+        pane ( ( c, w ), pc ) =
             area
-                { start = ( c, 1 )
+                { start = ( 1, c )
                 , width = w
                 , height = 3
                 }
                 (renderPane pc)
 
         areas =
-            titleArea :: contentAreas
+            titleArea :: panes
     in
         grid None
-            { columns = [ percent 10, percent 10, percent 10, percent 10, percent 10, percent 10, percent 10, percent 10, percent 10, percent 10 ]
-            , rows =
-                [ percent 20
-                , percent 20
-                , percent 20
-                , percent 20
-                , percent 20
-                ]
+            { columns = List.repeat 10 (percent 10)
+            , rows = List.repeat 5 (percent 20)
             }
             []
             areas
@@ -79,34 +73,38 @@ renderSlideWithTitle title weighedPane =
 renderTitle : String -> Element Styles variation msg
 renderTitle t =
     row None
-        [ justify, paddingXY 80 20 ]
+        [ width (percent 100), justify, paddingXY 80 20 ]
         [ el Title [] (text t) ]
 
 
 deckTitle : String -> Element Styles variation msg
 deckTitle t =
     row None
-        [ verticalCenter, justify, paddingXY 120 40 ]
+        [ width (percent 100), height (percent 100), verticalCenter, justify, paddingXY 120 40 ]
         [ el DeckTitle [] (text t) ]
 
 
 salutation : String -> Element Styles variation msg
 salutation t =
     row None
-        [ verticalCenter, justify, paddingXY 120 40 ]
+        [ width (percent 100), verticalCenter, justify, paddingXY 120 40 ]
         [ el Salutation [] (text t) ]
 
 
 renderPane : Pane -> Element Styles variation msg
 renderPane pane =
-    case pane of
-        FromMarkDown markdownString ->
-            let
-                htmlContent =
-                    Markdown.toHtml Nothing markdownString
-                        |> div []
-            in
-                html htmlContent
+    let
+        paneContent =
+            case pane of
+                FromMarkDown markdownString ->
+                    let
+                        htmlContent =
+                            Markdown.toHtml Nothing markdownString
+                                |> div []
+                    in
+                        html htmlContent
+    in
+        el Pane [ width (percent 100) ] paneContent
 
 
 normaliseWeight : List ( Weight, a ) -> List ( Weight, a )
@@ -115,19 +113,17 @@ normaliseWeight weights =
         maxTen =
             take 10 weights
 
-        allWeights =
-            List.map first maxTen
-
         total =
-            sum allWeights
+            List.map first maxTen
+                |> sum
 
         inPercents =
-            List.map (\( w, a ) -> ( w // total, a )) maxTen
+            List.map (\( w, a ) -> ( (w * 100) // total, a )) maxTen
 
-        toTens =
+        inPerTens =
             List.map (\( p, a ) -> ( p // 10, a )) inPercents
     in
-        case toTens of
+        case inPerTens of
             [] ->
                 []
 

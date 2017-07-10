@@ -2,8 +2,8 @@ module Present
     exposing
         ( titleSlide
         , fullSlide
-        , pageWithTitleFull
-        , pageWithTitle_50_50
+        , slideWithTitleFull
+        , slideWithTitle_50_50
         , fromMarkDown
         , app
         )
@@ -14,7 +14,7 @@ module Present
 @docs app
 
 # Slide making functions
-@docs titleSlide, fullSlide, pageWithTitleFull, pageWithTitle_50_50, fromMarkDown
+@docs titleSlide, fullSlide, slideWithTitleFull, slideWithTitle_50_50, fromMarkDown
 
 -}
 
@@ -26,33 +26,25 @@ import Html exposing (Html)
 
 
 {-
-   Main layouting comes from the mdgriffith/style-elements
--}
-
-import Element exposing (Element, viewport)
-
-
-{-
    Implementation based on mdgriffith/style-elements
 -}
 
 import Slides.Model exposing (..)
-import Slides.Slides exposing (renderSlide)
-import Slides.Styles exposing (Styles(..))
+import Slides.Slides exposing (render)
 
 
 -- Models
 
 
-type alias Presentation variation msg =
-    { past : List (Element Styles variation msg)
-    , current : CurrentSlide variation msg
-    , toGo : List (Element Styles variation msg)
+type alias Presentation msg =
+    { past : List (Html msg)
+    , current : CurrentSlide msg
+    , toGo : List (Html msg)
     }
 
 
-type alias Model variation msg =
-    { presentation : Presentation variation msg
+type alias Model msg =
+    { presentation : Presentation msg
     , deck : Deck
     }
 
@@ -71,18 +63,18 @@ type Msg
     | NoOp
 
 
-type CurrentSlide variation msg
+type CurrentSlide msg
     = EmptyDeck
     | StartOfDeck
     | EndOfDeck
-    | Current (Element Styles variation msg)
+    | Current (Html msg)
 
 
 
 -- update
 
 
-update : Msg -> Model variation Msg -> ( Model variation Msg, Cmd msg )
+update : Msg -> Model Msg -> ( Model Msg, Cmd msg )
 update msg model =
     case msg of
         Start ->
@@ -111,7 +103,7 @@ update msg model =
 -- view
 
 
-view : Model variation Msg -> Html Msg
+view : Model Msg -> Html Msg
 view { presentation } =
     case presentation.current of
         EmptyDeck ->
@@ -124,64 +116,64 @@ view { presentation } =
             Html.div [] []
 
         Current c ->
-            viewport Slides.Styles.stylesheet c
+            c
 
 
 
 -- helpers
 
 
-{-| Create a title page.
+{-| Create a title slide.
 
-    titleSlide "This is a title" == page
+    titleSlide "This is a title" == slide
 -}
 titleSlide : Title -> Slide
 titleSlide title =
     TitleSlide title
 
 
-{-| Create a page with text.
+{-| Create a slide with text.
 
-    fullSlide (markdown "## This is a h2" ) == page
+    fullSlide (markdown "## This is a h2" ) == slide
 -}
 fullSlide : Pane -> Slide
-fullSlide pageContent =
-    FullSlide pageContent
+fullSlide pane =
+    FullSlide pane
 
 
-{-| Create a page with a title and a single box with text content.
+{-| Create a slide with a title and a single box with text content.
 
-    fullSlide "This is the page title" (fromMarkDown "## This is a h2" ) == page
+    fullSlide "This is the slide title" (fromMarkDown "## This is a h2" ) == slide
 -}
-pageWithTitleFull : String -> Pane -> Slide
-pageWithTitleFull string pageContent =
-    SlideWithTitle string [ ( 1, pageContent ) ]
+slideWithTitleFull : String -> Pane -> Slide
+slideWithTitleFull string pane =
+    SlideWithTitle string [ ( 1, pane ) ]
 
 
-{-| Create a page with a title and a two equally sized boxes with text content.
+{-| Create a slide with a title and a two equally sized boxes with text content.
 
     fullSlide
-      "This is the page title"
-      (fromMarkDown "### This is the left content" )
-      (fromMarkdown "### This is a right content" )
+      "This is the slide title"
+      (fromMarkDown "### This is the left pane" )
+      (fromMarkdown "### This is a right pane" )
 -}
-pageWithTitle_50_50 : String -> Pane -> Pane -> Slide
-pageWithTitle_50_50 title left right =
+slideWithTitle_50_50 : String -> Pane -> Pane -> Slide
+slideWithTitle_50_50 title left right =
     SlideWithTitle title [ ( 5, left ), ( 5, right ) ]
 
 
-pageWithTitle_30_70 : String -> Pane -> Pane -> Slide
-pageWithTitle_30_70 title left right =
+slideWithTitle_30_70 : String -> Pane -> Pane -> Slide
+slideWithTitle_30_70 title left right =
     SlideWithTitle title [ ( 3, left ), ( 7, right ) ]
 
 
-pageWithoutTitle_50_50 : Pane -> Pane -> Slide
-pageWithoutTitle_50_50 left right =
+slideWithoutTitle_50_50 : Pane -> Pane -> Slide
+slideWithoutTitle_50_50 left right =
     SlideWithoutTitle [ ( 5, left ), ( 5, right ) ]
 
 
-pageWithoutTitle_30_70 : Pane -> Pane -> Slide
-pageWithoutTitle_30_70 left right =
+slideWithoutTitle_30_70 : Pane -> Pane -> Slide
+slideWithoutTitle_30_70 left right =
     SlideWithoutTitle [ ( 3, left ), ( 7, right ) ]
 
 
@@ -195,12 +187,12 @@ fromMarkDown string =
     FromMarkDown string
 
 
-present : Model variation Msg -> Model variation Msg
+present : Model Msg -> Model Msg
 present model =
     next model
 
 
-next : Model variation Msg -> Model variation Msg
+next : Model Msg -> Model Msg
 next ({ presentation } as model) =
     case presentation.current of
         EmptyDeck ->
@@ -253,7 +245,7 @@ next ({ presentation } as model) =
                 }
 
 
-prev : Model variation Msg -> Model variation Msg
+prev : Model Msg -> Model Msg
 prev ({ presentation } as model) =
     case presentation.current of
         EmptyDeck ->
@@ -306,7 +298,7 @@ prev ({ presentation } as model) =
                 }
 
 
-rewind : Model variation Msg -> Model variation Msg
+rewind : Model Msg -> Model Msg
 rewind ({ presentation } as model) =
     case presentation.current of
         EmptyDeck ->
@@ -388,7 +380,7 @@ keyPressDispatcher keyCode =
         |> Maybe.withDefault NoOp
 
 
-subscriptions : Model variation Msg -> Sub Msg
+subscriptions : Model Msg -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Keyboard.ups (keyPressDispatcher)
@@ -396,7 +388,7 @@ subscriptions model =
         ]
 
 
-init : Deck -> Navigation.Location -> ( Model variation Msg, Cmd Msg )
+init : Deck -> Navigation.Location -> ( Model Msg, Cmd Msg )
 init deck location =
     let
         model =
@@ -404,7 +396,7 @@ init deck location =
             , presentation =
                 { past = []
                 , current = StartOfDeck
-                , toGo = List.map renderSlide deck
+                , toGo = List.map render deck
                 }
             }
     in
@@ -419,14 +411,14 @@ init deck location =
          """ # This is a header
          And this should be plain text
          """
-     , pageWithTitle_50_50
-         "Title of the page"
+     , slideWithTitle_50_50
+         "Title of the slide"
          """# Left pane"""
          """# Right pane"""
      ]
        |> app
 -}
-app : Deck -> Program Never (Model variation Msg) Msg
+app : Deck -> Program Never (Model Msg) Msg
 app deck =
     Navigation.program
         NewLocation
