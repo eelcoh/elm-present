@@ -6,12 +6,13 @@ module Present
         , slideWithTitle_50_50
         , fromMarkDown
         , app
+        , Styles(..)
         )
 
 {-| This library is a framework to build presentations in Elm.
 
 # Definition
-@docs app
+@docs app, Styles
 
 # Slide making functions
 @docs titleSlide, fullSlide, slideWithTitleFull, slideWithTitle_50_50, fromMarkDown
@@ -29,11 +30,33 @@ import Html exposing (Html)
    Implementation based on mdgriffith/style-elements
 -}
 
+import Style exposing (StyleSheet)
+
+
+{-
+   Slides core modules
+-}
+
 import Slides.Model exposing (..)
 import Slides.Slides exposing (render)
+import Slides.Styles
 
 
 -- Models
+
+
+{-| Styles
+  You can provide your own styles for the following:
+
+    type Styles
+        = None
+        | DeckTitle
+        | Title
+        | Pane
+        | Salutation
+-}
+type alias Styles =
+    Slides.Styles.Styles
 
 
 type alias Presentation msg =
@@ -388,15 +411,15 @@ subscriptions model =
         ]
 
 
-init : Deck -> Navigation.Location -> ( Model Msg, Cmd Msg )
-init deck location =
+init : Maybe (StyleSheet Styles variation) -> Deck -> Navigation.Location -> ( Model Msg, Cmd Msg )
+init mStylesheet deck location =
     let
         model =
             { deck = deck
             , presentation =
                 { past = []
                 , current = StartOfDeck
-                , toGo = List.map render deck
+                , toGo = List.map (render mStylesheet) deck
                 }
             }
     in
@@ -418,11 +441,11 @@ init deck location =
      ]
        |> app
 -}
-app : Deck -> Program Never (Model Msg) Msg
-app deck =
+app : Maybe (StyleSheet Styles variation) -> Deck -> Program Never (Model Msg) Msg
+app mStylesheet deck =
     Navigation.program
         NewLocation
-        { init = init deck
+        { init = init mStylesheet deck
         , update = update
         , view = view
         , subscriptions = subscriptions

@@ -28,6 +28,7 @@ stylesheet =
             , Color.border Color.lightGrey
             , Font.typeface [ "georgia", "times roman", "serif" ]
             , Font.size 40
+            , Font.weight 700
             , Font.lineHeight 1.3
               -- line height, given as a ratio of current font size.
             ]
@@ -37,26 +38,31 @@ stylesheet =
             , Color.text Color.darkCharcoal
             , Color.background Color.white
             , Color.border Color.lightGrey
-            , Font.typeface [ "georgia", "times roman", "serif" ]
-            , Font.size 25
+            , Font.typeface [ "Arial Bold", "helvetica", "sans-serif" ]
+            , Font.size 40
+            , Font.weight 700
             , Font.lineHeight 1.3
               -- line height, given as a ratio of current font size.
             ]
-        , style DeckTitle
+        , style Salutation
             [ Border.all 1
               -- set all border widths to 1 px.
             , Color.text Color.yellow
             , Color.background Color.white
             , Color.border Color.lightGrey
             , Font.typeface [ "georgia", "times roman", "serif" ]
-            , Font.size 10
+            , Font.size 40
             , Font.lineHeight 1.3
+            , Font.weight 700
               -- line height, given as a ratio of current font size.
             ]
         , style Pane
             [ Border.all 5
             , Border.solid
             , Font.typeface [ "helvetica", "arial", "sans-serif" ]
+            , Font.justify
+            , Font.justifyAll
+            , Font.wrap
             , Color.text Color.darkCharcoal
             , Color.background Color.white
             , Color.border Color.lightGrey

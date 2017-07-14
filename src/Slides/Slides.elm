@@ -6,8 +6,19 @@ import Html exposing (div)
 import List exposing (sum, take)
 import Markdown
 import Slides.Model exposing (Pane, Pane(..), Slide(..), Title, WeighedPane, Weight)
-import Slides.Styles exposing (Styles(..), stylesheet)
+import Slides.Styles as Default exposing (Styles(..))
 import Tuple exposing (first, second)
+import Style exposing (..)
+
+
+render : Maybe (StyleSheet Styles variation) -> Slide -> Html.Html msg
+render mStylesheet slide =
+    let
+        ssheet =
+            Maybe.withDefault Default.stylesheet mStylesheet
+    in
+        renderSlide slide
+            |> layout ssheet
 
 
 renderSlide : Slide -> Element Styles variation msg
@@ -17,28 +28,25 @@ renderSlide slide =
             deckTitle title
 
         FullSlide pane ->
-            renderPane pane
+            renderOnGrid Nothing [ ( 1, pane ) ]
 
         SlideWithoutTitle weighedPane ->
-            empty
+            renderOnGrid Nothing weighedPane
 
         SlideWithTitle title weighedPane ->
-            renderSlideWithTitle title weighedPane
+            renderOnGrid (Just title) weighedPane
 
         ThankYou salut ->
             salutation salut
 
 
-render : Slide -> Html.Html msg
-render slide =
-    renderSlide slide
-        |> layout stylesheet
-
-
-renderSlideWithTitle : Title -> List WeighedPane -> Element Styles variation msg
-renderSlideWithTitle title weighedPane =
+renderOnGrid : Maybe Title -> List WeighedPane -> Element Styles variation msg
+renderOnGrid mTitle weighedPane =
     let
-        titleArea =
+        mTitleArea =
+            Maybe.map titleArea mTitle
+
+        titleArea title =
             area
                 { start = ( 0, 0 )
                 , width = 10
@@ -46,21 +54,30 @@ renderSlideWithTitle title weighedPane =
                 }
                 (renderTitle title)
 
+        startY =
+            Maybe.map (\_ -> 1) mTitleArea
+                |> Maybe.withDefault 0
+
         panes =
             normaliseWeight weighedPane
                 |> toAreaPositions
-                |> List.map pane
+                |> List.map paneArea
 
-        pane ( ( c, w ), pc ) =
+        paneArea ( ( c, w ), pc ) =
             area
-                { start = ( 1, c )
+                { start = ( c, startY )
                 , width = w
-                , height = 3
+                , height = (4 - startY)
                 }
                 (renderPane pc)
 
         areas =
-            titleArea :: panes
+            case mTitleArea of
+                Just title ->
+                    title :: panes
+
+                Nothing ->
+                    panes
     in
         grid None
             { columns = List.repeat 10 (percent 10)
@@ -73,7 +90,7 @@ renderSlideWithTitle title weighedPane =
 renderTitle : String -> Element Styles variation msg
 renderTitle t =
     row None
-        [ width (percent 100), justify, paddingXY 80 20 ]
+        [ width (percent 100), justify, paddingXY 40 20 ]
         [ el Title [] (text t) ]
 
 
@@ -104,7 +121,7 @@ renderPane pane =
                     in
                         html htmlContent
     in
-        el Pane [ width (percent 100) ] paneContent
+        el Pane [ spacing 40, padding 40, width (percent 100) ] paneContent
 
 
 normaliseWeight : List ( Weight, a ) -> List ( Weight, a )
@@ -139,26 +156,8 @@ normaliseWeight weights =
                     ( firstSize, a ) :: rest
 
 
-
--- scanl : (a -> b -> b) -> b -> List a -> List b
-
-
 toAreaPositions : List ( Int, a ) -> List ( ( Int, Int ), a )
-toAreaPositions weighedPane =
-    let
-        f w1 ( s, w0 ) =
-            ( (s + w0 + w1), w1 )
-    in
-        List.map first weighedPane
-            |> List.scanl f ( 0, 0 )
-            |> List.map2 (flip (,)) (List.map second weighedPane)
-
-
-
-{- }
-   row [ spacing 10, padding 10 ]
-       [ el Box [] empty
-       , el Box [] empty
-       , el Box [] empty
-       ]
--}
+toAreaPositions weighedPanes =
+    List.map first weighedPanes
+        |> List.scanl (+) 0
+        |> List.map2 (\( w, a ) s -> ( ( s, w ), a )) weighedPanes
